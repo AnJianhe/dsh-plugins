@@ -1,0 +1,4 @@
+- insert:
+    - id: prompt-optimizer
+      name: '@local/dsh-prompt-optimizer'
+      config: {}

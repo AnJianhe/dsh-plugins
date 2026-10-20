@@ -1,0 +1,26 @@
+{
+  "name": "@local/dsh-computer-use",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Computer Use for DSH: screenshot and control the whole Windows desktop, with an edge glow while the agent works.",
+  "exports": {
+    ".": "./index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "lib/validation.js",
+    "lib/helper.ps1",
+    "lib/glow.ps1",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

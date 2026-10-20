@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prompt Optimizer">
+  <rect width="64" height="64" rx="14" fill="#0d1117"/>
+  <path d="M18 17h28a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H31l-9 7v-7h-4a4 4 0 0 1-4-4V21a4 4 0 0 1 4-4z" fill="none" stroke="#4b9eff" stroke-width="3" stroke-linejoin="round"/>
+  <path d="m32 23 2.2 6.8L41 32l-6.8 2.2L32 41l-2.2-6.8L23 32l6.8-2.2L32 23z" fill="#7ee787"/>
+</svg>

@@ -1,0 +1,21 @@
+{
+  "name": "@local/dsh-github-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Connects the official GitHub MCP server so its tools appear to the model as mcp__github__*.",
+  "exports": {
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

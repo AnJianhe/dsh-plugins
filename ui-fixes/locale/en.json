@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "UI Fixes",
+    "description": "Adds a delete entry to the session menu and a back control to plugin detail pages."
+  }
+}

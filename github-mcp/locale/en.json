@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "GitHub MCP",
+    "description": "Connects the official GitHub MCP server, exposing its repository, pull request, issue, code search and Actions tools to the model as mcp__github__*."
+  }
+}

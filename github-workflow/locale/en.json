@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "GitHub Workflow",
+    "description": "Opens, reviews and merges pull requests, files issues, and commits files to branches through the GitHub REST API, with a matching local git tool for staging, committing and pushing."
+  }
+}

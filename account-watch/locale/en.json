@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Account Balance",
+    "description": "Shows the DeepSeek wallet balance in its own panel and reminds the running agent when the total drops below a threshold."
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "GitHub 工作流",
+    "description": "通过 GitHub REST API 创建、审阅和合并 PR，提交 issue，并直接把文件提交到分支；同时提供本地 git 工具用于暂存、提交和推送。"
+  }
+}

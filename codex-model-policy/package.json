@@ -1,0 +1,10 @@
+{
+  "name": "@local/dsh-codex-model-policy",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Codex 模型默认思考档位与旧型号禁用策略",
+  "exports": { ".": "./index.js", "./locale/*.json": "./locale/*.json", "./icon": "./icon.svg" },
+  "files": ["index.js", "policy.js", "cordis.patch.yml", "locale/*.json", "icon.svg"],
+  "dsh": { "bundle": { "patch": "./cordis.patch.yml" } }
+}

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Prompt Optimizer",
+    "description": "Refines the current composer draft with the selected model and asks a native clarification question when a key decision is ambiguous."
+  }
+}

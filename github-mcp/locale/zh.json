@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "GitHub MCP",
+    "description": "接入 GitHub 官方 MCP server，把仓库、PR、issue、代码搜索和 Actions 工具以 mcp__github__* 的形式提供给模型。"
+  }
+}

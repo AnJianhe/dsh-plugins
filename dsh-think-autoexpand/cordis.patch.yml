@@ -1,0 +1,4 @@
+# dsh-think-autoexpand: mount the plugin entry. The browser half auto-expands running Think rows.
+- insert:
+    - id: dsh-think-autoexpand
+      name: dsh-think-autoexpand
