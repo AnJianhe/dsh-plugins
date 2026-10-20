@@ -1,0 +1,1 @@
+{"meta":{"title":"Model handoff compaction","description":"Condense the conversation with the wide-context model before the first request reaches a narrower one."}}

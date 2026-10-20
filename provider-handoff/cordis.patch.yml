@@ -1,0 +1,19 @@
+# 从宽窗口模型切到窄窗口模型时，先把对话压缩进目标上限再发送。
+- insert:
+    - id: provider-handoff
+      name: '@local/dsh-provider-handoff'
+      config:
+        enabled: true
+        headroomTokens: 8192
+        retainNodes: 6
+        maxCompactionsPerRequest: 2
+        blockOnFailure: true
+
+# 压缩后端在当前 profile 里是关闭的，这里启用它并让摘要固定由 DeepSeek 生成，
+# 而不是由即将接收对话的窄窗口模型（ChatGPT）生成。
+- id: compaction-basic
+  name: '@deepseek-ai/dsh-compaction-basic'
+  disabled: false
+  config:
+    summarizationProvider: deepseek-account
+    summarizationModel: deepseek-flash

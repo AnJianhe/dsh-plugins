@@ -29,6 +29,7 @@ plugin_manager({
 | `prompt-optimizer` | `@local/dsh-prompt-optimizer` | 输入框「优化提示词」按钮；遇到关键歧义时用原生问题模块向用户澄清 |
 | `ui-fixes` | `@local/dsh-ui-fixes` | Web UI 小修补：会话菜单删除入口、插件详情页返回按钮 |
 | `codex-model-policy` | `@local/dsh-codex-model-policy` | Codex 模型默认思考档位与旧型号禁用策略 |
+| `provider-handoff` | `@local/dsh-provider-handoff` | 从 DeepSeek 切到 ChatGPT 前，先用 DeepSeek 把对话压缩进目标模型上下文上限，再把压缩后的历史发过去；压不下去就阻断，不发原始长对话 |
 
 ## 结构约定 / Layout
 
