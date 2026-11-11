@@ -1,6 +1,6 @@
 {
   "name": "@local/dsh-prompt-optimizer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "description": "Adds a one-click prompt optimizer to the composer, with native clarification questions for important ambiguity.",
@@ -25,7 +25,9 @@
     "client": {
       "platform": "web",
       "immediately": true,
-      "inject": ["@deepseek-ai/dsh-client-ui-conversation"]
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
     }
   }
 }

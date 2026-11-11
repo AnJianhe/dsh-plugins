@@ -1,0 +1,1 @@
+{"meta":{"title":"Profile Config Guard","description":"Watches the DSH profile config and restores the latest healthy snapshot when it is wiped or loses key entries."}}

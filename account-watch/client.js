@@ -625,7 +625,9 @@ window.__ModuleLoader__.load({
                     }, saving ? '…' : '保存'))))
             : null,
 
-          h('div', { style: styles.card },
+          // 未接入 ChatGPT 时整块隐藏，不显示 100% 的空占位。
+          codex && codex.available
+            ? h('div', { style: styles.card },
             h('div', {
               style: {
                 display: 'flex',
@@ -723,10 +725,8 @@ window.__ModuleLoader__.load({
                           : null)
                       : null)
                 })()
-              : null,
-            !codex || !codex.available
-              ? h('div', { style: styles.banner }, (codex && codex.reason) || '未接入')
-              : null),
+              : null)
+            : null,
 
           notice ? h('div', { style: styles.saved }, notice) : null,
 
@@ -904,10 +904,10 @@ window.__ModuleLoader__.load({
             style: { fontSize: 11, color: C.muted, letterSpacing: '0.02em' },
           }, 'DeepSeek')
         : null),
-      wide
+      wide && codex && codex.available
         ? h('div', { style: { height: 1, width: '100%', background: C.border, margin: '5px 0 5px' } })
         : null,
-      wide
+      wide && codex && codex.available
         ? h('div', { style: { width: '100%' } },
             h('div', {
               style: {
@@ -918,7 +918,7 @@ window.__ModuleLoader__.load({
               },
             }, 'ChatGPT'))
         : null,
-      wide
+      wide && codex && codex.available
         ? h('div', { style: { display: 'grid', gap: 5, width: '100%', marginTop: 1 } },
             [['5h', fiveHourLeft, fiveHourReset], ['7d', weeklyLeft, weeklyReset]].map(
               ([label, left, resetAt]) => {

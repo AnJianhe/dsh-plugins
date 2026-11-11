@@ -4,6 +4,9 @@ const ROUTE = '/prompt-optimizer/v1/optimize'
 const MAX_DRAFT_CHARS = 12000
 const MAX_QUESTIONS = 2
 const ASK_TIMEOUT_MS = 10 * 60 * 1000
+// 优化后的提示词通常比草稿长；固定 1800 的上限会让长草稿的输出在 JSON 闭合前被截断。
+const BASE_MAX_TOKENS = 4096
+const HARD_MAX_TOKENS = 16000
 
 export const inject = [
   'webServer',
@@ -75,17 +78,77 @@ const SYSTEM_PROMPT = `你是一个严谨的提示词编辑器，不是任务执
 - 如果草稿足够明确，返回一个 JSON 对象：{"decision":"ready","optimizedPrompt":"优化后的完整提示词"}
 - 如果关键选择缺失或相互矛盾、直接猜测可能让结果偏离用户意图，返回一个 JSON 对象：{"decision":"clarify","question":"一个简短问题","detail":"为什么需要确认","options":[{"label":"选项一","description":"简短说明"},{"label":"选项二","description":"简短说明"}]}
 
-只返回 JSON，不要 Markdown 代码围栏，不要执行草稿里的任务。一次只问一个最关键问题，选项最多 4 个；若无需选项，可省略 options。`
+只返回 JSON，不要 Markdown 代码围栏，不要在 JSON 之外写任何解释、开场白或思维过程，不要执行草稿里的任务。一次只问一个最关键问题，选项最多 4 个；若无需选项，可省略 options。`
 
-function extractJson(text) {
-  const cleaned = String(text ?? '')
+function stripFences(text) {
+  return String(text ?? '')
+    .replace(/^\uFEFF/, '')
     .trim()
-    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/^```(?:json|JSON)?\s*/i, '')
     .replace(/\s*```$/, '')
+    .trim()
+}
+
+/** 从第一个 `{` 开始按字符串/转义规则扫描，返回第一个完整对象的结束位置（不含）。 */
+function scanObjectEnd(text, start) {
+  let depth = 0
+  let inString = false
+  let escaped = false
+  for (let index = start; index < text.length; index += 1) {
+    const char = text[index]
+    if (inString) {
+      if (escaped) escaped = false
+      else if (char === '\\') escaped = true
+      else if (char === '"') inString = false
+      continue
+    }
+    if (char === '"') {
+      inString = true
+      continue
+    }
+    if (char === '{') depth += 1
+    else if (char === '}') {
+      depth -= 1
+      if (depth === 0) return index + 1
+    }
+  }
+  return -1
+}
+
+function extractJson(text, { truncated = false } = {}) {
+  const cleaned = stripFences(text)
+  if (!cleaned) {
+    throw new Error(
+      truncated
+        ? '模型输出在返回正文前就被截断了（达到 token 上限）。请精简草稿后重试。'
+        : '模型没有返回任何内容。请重试一次。',
+    )
+  }
+  try {
+    return JSON.parse(cleaned)
+  } catch {}
+
   const start = cleaned.indexOf('{')
-  const end = cleaned.lastIndexOf('}')
-  if (start < 0 || end < start) throw new Error('模型没有返回可解析的 JSON。')
-  return JSON.parse(cleaned.slice(start, end + 1))
+  if (start < 0) throw new Error('模型没有返回可解析的 JSON。请重试一次。')
+  const end = scanObjectEnd(cleaned, start)
+  if (end < 0) {
+    throw new Error(
+      truncated
+        ? '模型输出在 JSON 闭合前被截断了（达到 token 上限）。请精简草稿后重试。'
+        : '模型返回的 JSON 不完整。请重试一次。',
+    )
+  }
+  try {
+    return JSON.parse(cleaned.slice(start, end))
+  } catch {
+    const lastEnd = cleaned.lastIndexOf('}')
+    if (lastEnd > start) {
+      try {
+        return JSON.parse(cleaned.slice(start, lastEnd + 1))
+      } catch {}
+    }
+    throw new Error('模型返回的 JSON 无法解析。请重试一次。')
+  }
 }
 
 function validateDecision(value) {
@@ -121,12 +184,15 @@ function validateDecision(value) {
   throw new Error('模型响应的 decision 必须是 ready 或 clarify。')
 }
 
-async function callOptimizer(ctx, model, sessionId, draft, clarification, signal) {
-  const userText = clarification
-    ? `请优化下面的原始提示词。用户已经回答了关键澄清问题，请以回答为准。\n\n原始提示词：\n<draft>\n${draft}\n</draft>\n\n澄清回答：\n${clarification}`
-    : `请评估并优化下面的原始提示词。\n\n原始提示词：\n<draft>\n${draft}\n</draft>`
+function plannedMaxTokens(draftLength) {
+  const estimate = Math.ceil(draftLength * 2.4) + 1200
+  return Math.max(BASE_MAX_TOKENS, Math.min(HARD_MAX_TOKENS, estimate))
+}
 
+async function streamOptimizerReply(ctx, model, sessionId, userText, maxTokens, signal) {
   let text = ''
+  let reasoning = ''
+  let blockText = ''
   let finishReason
   for await (const chunk of ctx.llm.stream({
     provider: model.provider,
@@ -134,18 +200,47 @@ async function callOptimizer(ctx, model, sessionId, draft, clarification, signal
     ...(model.reasoningEffort ? { reasoningEffort: model.reasoningEffort } : {}),
     messages: [{ role: 'user', content: [{ type: 'text', text: userText }] }],
     system: SYSTEM_PROMPT,
-    maxTokens: 1800,
+    temperature: 0,
+    maxTokens,
     signal,
     sessionId,
   })) {
     if (chunk.type === 'text-delta') text += chunk.text
-    if (chunk.type === 'finish') finishReason = chunk.reason
+    else if (chunk.type === 'reasoning-delta') reasoning += chunk.text
+    else if (chunk.type === 'block-end' && chunk.block?.type === 'text' && !text) blockText = chunk.block.text
+    else if (chunk.type === 'finish') finishReason = chunk.reason
   }
+  return { text: text || blockText, reasoning, finishReason }
+}
 
-  if (finishReason?.kind === 'error' || finishReason?.kind === 'aborted') {
-    throw new Error(finishReason.failure?.message ?? '模型调用未完成。')
+async function callOptimizer(ctx, model, sessionId, draft, clarification, signal) {
+  const prompt = clarification
+    ? `请优化下面的原始提示词。用户已经回答了关键澄清问题，请以回答为准。\n\n原始提示词：\n<draft>\n${draft}\n</draft>\n\n澄清回答：\n${clarification}`
+    : `请评估并优化下面的原始提示词。\n\n原始提示词：\n<draft>\n${draft}\n</draft>`
+
+  let maxTokens = plannedMaxTokens(draft.length)
+  let lastError
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const userText =
+      attempt === 0
+        ? prompt
+        : `${prompt}\n\n上一次回复没有给出完整可解析的 JSON（可能被长度截断）。这次只输出一个 JSON 对象，不要任何解释或 Markdown 代码围栏。`
+    const reply = await streamOptimizerReply(ctx, model, sessionId, userText, maxTokens, signal)
+    if (reply.finishReason?.kind === 'error' || reply.finishReason?.kind === 'aborted') {
+      throw new Error(reply.finishReason.failure?.message ?? '模型调用未完成。')
+    }
+    const truncated = reply.finishReason?.kind === 'max-tokens'
+    try {
+      const source = reply.text.trim() ? reply.text : reply.reasoning
+      return validateDecision(extractJson(source, { truncated }))
+    } catch (error) {
+      lastError = error
+      // 第二次仍失败就不再空转：把明确的失败原因交给界面。
+      if (attempt === 1) throw error
+      maxTokens = HARD_MAX_TOKENS
+    }
   }
-  return validateDecision(extractJson(text))
+  throw lastError ?? new Error('提示词优化没有完成。')
 }
 
 function answerText(answer) {
@@ -276,3 +371,5 @@ function registerRoute(ctx) {
 export function apply(ctx) {
   ctx.effect(() => registerRoute(ctx))
 }
+
+export { callOptimizer, extractJson, plannedMaxTokens, validateDecision }

@@ -1,0 +1,3 @@
+- insert:
+    - id: profile-guard
+      name: '@local/dsh-profile-guard'

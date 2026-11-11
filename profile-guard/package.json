@@ -1,0 +1,14 @@
+{
+  "name": "@local/dsh-profile-guard",
+  "version": "1.0.1",
+  "private": true,
+  "type": "module",
+  "description": "守护 DSH profile 配置：检测 cordis.patch.yml 被清空或关键条目丢失时，自动恢复到最近健康快照。",
+  "exports": {
+    ".": "./index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": ["index.js", "cordis.patch.yml", "locale/*.json", "icon.svg", "README.md"],
+  "dsh": { "bundle": { "patch": "./cordis.patch.yml" } }
+}
